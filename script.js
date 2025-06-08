@@ -1,5 +1,3 @@
-const apiKey = '53897624554e4216a5f1d20114d76cb7';
-
 const blogContainer = document.getElementById('blog-container');
 const searchField = document.getElementById('search-input');
 const searchButton = document.getElementById('search-button');
@@ -10,7 +8,6 @@ setTimeout(() => {
 }, 3000);
 
 
-// Helper to timeout fetch after 5 seconds
 function fetchWithTimeout(resource, options = {}) {
     const { timeout = 5000 } = options;
     return Promise.race([
@@ -21,51 +18,16 @@ function fetchWithTimeout(resource, options = {}) {
     ]);
 }
 
-async function fetchRandomNews() {
-    const loading = document.createElement('h2');
-    loading.textContent = "Checking Connection";
-    blogContainer.appendChild(loading);
-
-    try {
-        const apiUrl = `https://newsapi.org/v2/top-headlines?country=us&pageSize=20&apiKey=${apiKey}`;
-        const response = await fetchWithTimeout(apiUrl, { timeout: 5000 });
-        const data = await response.json();
-        blogContainer.removeChild(loading);
-        return data.articles;
-    } catch (error) {
-        console.log('Error fetching news:', error);
-        blogContainer.removeChild(loading);
-        const errorBlock = document.createElement('p');
-        errorBlock.textContent = "Error: Internet disconnected, Please check your Internet Connection or try again later";
-        blogContainer.appendChild(errorBlock);
-        return [];
-    }
-}
-
-async function fetchNewsQuery(searchQuery) {
-    const loading = document.createElement('h2');
-    loading.textContent = "Checking Connection";
-    blogContainer.appendChild(loading);
-
-    try {
-        const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&pageSize=20&apiKey=${apiKey}`;
-        const response = await fetchWithTimeout(apiUrl, { timeout: 5000 });
-        const data = await response.json();
-        blogContainer.removeChild(loading);
-        return data.articles;
-    } catch (error) {
-        console.error("Error fetching search news", error);
-        blogContainer.removeChild(loading);
-        const errorBlock = document.createElement('p');
-        errorBlock.textContent = "Error: Internet disconnected, Please check your Internet Connection or try again later";
-        blogContainer.appendChild(errorBlock);
-        return [];
-    }
-}
-
 function displayBlock(articles) {
-    // Clear previous articles
+    
     blogContainer.innerHTML = "";
+
+    if (!Array.isArray(articles)) {
+        const errorBlock = document.createElement('p');
+        errorBlock.textContent = "No articles found or an error occurred.";
+        blogContainer.appendChild(errorBlock);
+        return;
+    }
 
     articles.forEach((article) => {
         const blogCard = document.createElement('div');
@@ -95,6 +57,80 @@ function displayBlock(articles) {
     });
 }
 
+// ...existing code...
+
+async function fetchRandomNews() {
+    const loading = document.createElement('h2');
+    loading.textContent = "Checking Connection";
+    blogContainer.appendChild(loading);
+
+    try {
+        const apiUrl = `http://localhost:3000/api/news`;
+        const response = await fetchWithTimeout(apiUrl, { timeout: 5000 });
+        const data = await response.json();
+        blogContainer.removeChild(loading);
+
+        // Show API error message if present
+        if (!data.articles) {
+            const errorBlock = document.createElement('p');
+            errorBlock.textContent = data.message
+                ? `Error: ${data.message}`
+                : "No articles found or an error occurred.";
+            blogContainer.appendChild(errorBlock);
+            return [];
+        }
+
+        return data.articles;
+    } catch (error) {
+        blogContainer.removeChild(loading);
+        const errorBlock = document.createElement('p');
+        if (error.message === "Failed to fetch" || error.message === "timeout") {
+            errorBlock.textContent = "Error: Server not connected. Please check if the backend server is running.";
+        } else {
+            errorBlock.textContent = "Error: Internet disconnected, Please check your Internet Connection or try again later";
+        }
+        blogContainer.appendChild(errorBlock);
+        return [];
+    }
+}
+
+async function fetchNewsQuery(searchQuery) {
+    const loading = document.createElement('h2');
+    loading.textContent = "Checking Connection";
+    blogContainer.appendChild(loading);
+
+    try {
+        const apiUrl = `http://localhost:3000/api/news?q=${encodeURIComponent(searchQuery)}`;
+        const response = await fetchWithTimeout(apiUrl, { timeout: 5000 });
+        const data = await response.json();
+        blogContainer.removeChild(loading);
+
+        // Show API error message if present
+        if (!data.articles) {
+            const errorBlock = document.createElement('p');
+            errorBlock.textContent = data.message
+                ? `Error: ${data.message}`
+                : "No articles found or an error occurred.";
+            blogContainer.appendChild(errorBlock);
+            return [];
+        }
+
+        return data.articles;
+    } catch (error) {
+        blogContainer.removeChild(loading);
+        const errorBlock = document.createElement('p');
+        if (error.message === "Failed to fetch" || error.message === "timeout") {
+            errorBlock.textContent = "Error: Server not connected. Please check if the backend server is running.";
+        } else {
+            errorBlock.textContent = "Error: Internet disconnected, Please check your Internet Connection or try again later";
+        }
+        blogContainer.appendChild(errorBlock);
+        return [];
+    }
+}
+
+// ...existing code...
+
 searchButton.addEventListener('click', async () => {
     const searchQuery = searchField.value.trim();
     if (searchQuery !== "") {
@@ -107,6 +143,3 @@ searchButton.addEventListener('click', async () => {
     const articles = await fetchRandomNews();
     displayBlock(articles);
 })();
-
-// Loading Function
-
