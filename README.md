@@ -62,4 +62,4 @@ A simple web application to browse and search for the latest news articles using
 ## License
 
 Made by Akhilesh Sharma.  
-For personal and educational use only.
+For educational use only.
